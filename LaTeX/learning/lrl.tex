@@ -1,0 +1,43 @@
+\documentclass{article}
+
+\author{Caden Henrich}
+\title{An Introduction to Labels, References, and Lists in {\LaTeX}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Section \ref{list} talks about lists. Section \ref{lnr} talks about Labels and References.
+
+Find toilet paper at number \ref{toil}
+
+\section{Lists\label{list}}
+
+\begin{enumerate}
+    \item Bread
+    \item Butter
+    \item Cream
+    \item Toilet paper\label{toil}
+\end{enumerate}
+
+Unordered:
+
+\begin{itemize}
+    \item Corn
+        \begin{itemize}
+            \item Red corn
+            \item Black corn
+            \item Sweet corn
+            \item Feed corn
+        \end{itemize}
+    \item Wheat
+    \item Maize
+\end{itemize}
+
+\section{Labels \& References\label{lnr}}
+
+
+
+\end{document}

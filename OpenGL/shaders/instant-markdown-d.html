@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)file:///home/nohmayne/Documents/OpenGL/shaders/Shaders.html -->
+<html lang="en" class=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>instant-markdown-d</title>
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Content-Language" content="en">
+  <link rel="stylesheet" type="text/css" href="./instant-markdown-d_files/github-syntax-highlight.css">
+  <link rel="stylesheet" type="text/css" href="./instant-markdown-d_files/github-markdown.css">
+  <link rel="stylesheet" type="text/css" href="./instant-markdown-d_files/mjpage-html.css">
+  <style>
+    .markdown-body {
+      min-width: 200px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+    #con-error {
+      position: fixed;
+      top: 0px;
+      right: 0px;
+      padding: 5px;
+      background: white;
+      color: red;
+    }
+  </style>
+  <script src="./instant-markdown-d_files/socket.io.js"></script>
+  <script>
+    var socket = io.connect('http://'+ window.location.host +'/');
+    socket.on('connect', function () {
+      setDisconnected(false);
+      socket.on('newContent', function(newHTML) {
+        document.querySelector(".markdown-body").innerHTML = newHTML;
+
+        // scroll to the hyperlink with id="marker"
+        let marker = document.getElementById("marker");
+        if(marker) {
+          marker.scrollIntoView();
+        }
+      });
+      socket.on('die', function(newHTML) {
+        window.open('', '_self', '');
+        window.close();
+
+        var firefoxWarning =
+        "<h1>Oops!</h1>" +
+        "<h3>Firefox doesn't allow windows to self-close.</h3>" +
+        "<h3>If you want the preview window to close automatically like in other browsers, go to about:config and set dom.allow_scripts_to_close_windows to true.</h3>"
+        document.body.innerHTML = firefoxWarning;
+      });
+    });
+    socket.on('disconnect', function() {
+      setDisconnected(true);
+    });
+
+    try {
+      eval('// If CSP is active, then this is blocked');
+    } catch (e) {
+      // Detected that the CSP was active (by the user's preference).
+      // Drop capabilities to prevent rendered markdown from executing scripts.
+      var meta = document.createElement('meta');
+      meta.setAttribute('http-equiv', 'Content-Security-Policy');
+      meta.setAttribute('content', "script-src 'none';");
+      document.head.appendChild(meta);
+    }
+
+    function setDisconnected(isDisconnected) {
+      document.getElementById('con-error').style.display =
+        isDisconnected ? 'block' : 'none';
+    }
+  </script><meta http-equiv="Content-Security-Policy" content="script-src &#39;none&#39;;">
+</head>
+<body cz-shortcut-listen="true" style="">
+  <div class="container">
+    <div class="item row1"></div>
+    <div class="item row1"></div>
+    <div class="item row2"></div>
+    <div class="item row2">
+      <div class="repository-with-sidebar repo-container new-discussion-timeline with-full-navigation">
+         <div id="js-repo-pjax-container" class="repository-content context-loader-container">
+           <div id="readme" class="boxed-group flush clearfix announce instapaper_body md">
+             <article class="markdown-body"><h1>Shaders <a name="#marker" id="marker"></a></h1>
+<h2>What is a shader?</h2>
+<p>A shader is a program that runs on the GPU. In other words, it's something that can be written, linked, compiled, and run like any other program, but OpenGL sends it to the GPU. In graphics programming, it's important to be able to use the power of the GPU to draw graphics to the screen. Not everything should be done on the GPU; sometimes doing calculations on the CPU and sending it to the GPU is better. However, there will be things the GPU will be way faster at, and therefore sending them to the GPU makes more sense.</p>
+<h2>What types of shaders are there?</h2>
+<h3>Vertex shaders</h3>
+<ul>
+<li>Gets called for each vertex
+<ul>
+<li>In a triangle, will get called 3 times</li>
+</ul>
+</li>
+<li>Primary purpose is to tell OpenGL where the vertex is</li>
+<li>Also used to pass data (attributes) into the next stage
+<ul>
+<li>Vertex shader will take in all of the attributes in the buffer
+<ul>
+<li>First argument of <code>glVertexAttribPointer();</code> corresponds to an index in the vertex shader</li>
+<li>Through that format, the vertex attribute can be accessed</li>
+<li>Then OpenGL can be told where to position the vertex</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Fragment (Pixel) shader</h3>
+<ul>
+<li>Gets called for each pixel that needs to get rasterized
+<ul>
+<li>Rasterized — When something gets drawn to the screen</li>
+</ul>
+</li>
+<li>Primary purpose is to tell OpenGL what the color of the pixel is
+<ul>
+<li>Sort of like a coloring book, shading in the colors of the shape</li>
+</ul>
+</li>
+<li>Since it gets called so much, even something as simple as 5×5 can slow a program down
+<ul>
+<li>Doing math in the fragment shader should be minimized in optimization</li>
+<li>Calculating things like lighting should, however, be done in the fragment shader</li>
+<li>Essentially, only things that should be done for <strong>every</strong> pixel should be done in the frag shader</li>
+</ul>
+</li>
+</ul>
+<h3>Other</h3>
+<p>There are other types of shaders, but vertex and fragment shaders are the two most common. With just the vert and frag shaders, 90% of the graphics can be done. In fact, most complex game engines generate shaders live at runtime!</p>
+<blockquote>
+<p>Note: Shaders work the same as the rest of OpenGL: As a state machine. When a shader needs to be used, it has to be enabled, and any data need to be sent to the data in a uniform (which comes from the CPU). More on that later.</p>
+</blockquote>
+<h2>Making a shader!</h2>
+<h3>Compiling</h3>
+<p>The first step in getting a shader working is to compile the source code, so let's write a function to do that (writing a function is recommended to streamline the code). The function to compile the shader should take in the type of shader and its source code, and return an <code>unsigned int</code> reference to the shader's ID. The function header should look something like this:</p>
+<pre><code class="language-c++"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> <span class="hljs-title">CompileShader</span><span class="hljs-params">(<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> type, <span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; source)</span>
+</span></code></pre>
+<p>The type <em>can</em> be a <code>GLenum</code>, but using that limits the ability to transfer and work between different graphics APIs, so we'll use an <code>unsigned int</code>.</p>
+<p>Next, we need to create a shader and assign it an ID. This works in much the same way as buffers, but instead of using <code>glGenBuffers()</code>, we'll be using the <code>glCreateShader()</code> function. This function takes in one argument, which is the type of shader to create. In our case, this is dependent on the <code>unsigned int type</code> argument passed to the <code>CompileShader()</code> function. Declaration of the variable will look something like the following:</p>
+<pre><code class="language-c++"><span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> id = glCreateShader(type);
+</code></pre>
+<p>After creating the shader and assigning it an ID, we now need to take in the source code of the shader as a <code>const char*</code> and assign the newly created shader its respective source code. Since we're passing in an <code>std::string&amp;</code> as our argument, the <code>std::string.c_str()</code> function will come in handy. Next, we need to use the <code>glShaderSource()</code> function to actually assign the source code to the shader. This function can take in arrays of strings and lengths to better determine how to parse the shader code, but we won't be using that functionality since we'll only be using a single string as source code and we want to use the whole string.</p>
+<pre><code class="language-c++"><span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span>* src = source.c_str();
+glShaderSource(id, <span class="hljs-number">1</span>, &amp;src, <span class="hljs-literal">nullptr</span>);
+</code></pre>
+<p>Finally, we need to call the <code>glCompileShader()</code> function to compile the shader, passing in our ID as the shader to parse. Then we're done! Well, almost. Right now, if there's an error in the shader code, OpenGL might just display a black screen or crash, which gives us no real information we can use do diagnose the error. We'll remedy this later, but for now the final <code>CompileShader()</code> function should look like this:</p>
+<pre><code class="language-c++"><span class="hljs-comment">/* Function to compile shader code into a OpenGL shader */</span>
+<span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> <span class="hljs-title">CompileShader</span><span class="hljs-params">(<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> type, <span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; source)</span>  
+</span>{
+    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> id = glCreateShader(type); <span class="hljs-comment">// Create a shader with an ID of "id"</span>
+    <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span>* src = source.c_str(); <span class="hljs-comment">// Convert the source code into a const char*</span>
+    glShaderSource(id, <span class="hljs-number">1</span>, &amp;src, <span class="hljs-literal">nullptr</span>); <span class="hljs-comment">// Assign the source code to the shader "id"</span>
+
+    <span class="hljs-comment">// <span class="hljs-doctag">TODO:</span> Error handling</span>
+
+    <span class="hljs-keyword">return</span> id; <span class="hljs-comment">// Return the compiled shader </span>
+}
+</code></pre>
+<h3>Creating</h3>
+<p>To create the shader, we'll use our new <code>CompileShader()</code> function in another function we'll call <code>CreateShader()</code>. This function will have the job of making the actual shader program, which includes both the vertex and fragment shaders. After attaching both shaders to the program, the program will then be linked (just like a C++ program), and also validated to check for any invalid shaders. To do this, we'll make use of the <code>glLinkProgram()</code> and <code>glValidateProgram()</code> functions. After finishing working with the shaders themselves, we can delete them to free up space using the <code>glDeleteShader()</code> function. The arguments to our function will be the shader code for the vert and frag shaders. The function should look something like this:</p>
+<pre><code class="language-c++"><span class="hljs-comment">/* Function to create a shader program */</span>
+<span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> <span class="hljs-title">CreateShader</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; vertexShader, <span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; fragmentShader)</span>
+</span>{
+    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> program = glCreateProgram(); <span class="hljs-comment">// Create the program to store both shaders</span>
+
+    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> vs = CreateShader(GL_VERTEX_SHADER, vertexShader); <span class="hljs-comment">// Create the vertex shader</span>
+    <span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> fs = CreateShader(GL_FRAGMENT_SHADER, fragmentShader); <span class="hljs-comment">// Create the fragment shader</span>
+
+    <span class="hljs-comment">/* Attach the shaders to the program */</span>
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+
+    <span class="hljs-comment">/* Link and validate the program */</span>
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    <span class="hljs-comment">/* We have no use for the individual shaders now, delete them */</span>
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    <span class="hljs-keyword">return</span> program; <span class="hljs-comment">// Return the ID of the finalized program</span>
+}
+</code></pre>
+<p>Notice the above function replicates the steps needed to create a shader for both a vert and frag shader, not just one. While this may seem obvious, it's important not to omit either from any of the steps involved, otherwise the program might just display a black screen, which is hard to debug. We will, however, be fixing that in the next step.</p>
+<h2>Errors and Debugging</h2>
+<p>We can use many functions to check the status of our programs, but one major function used frequently in debugging shaders is <code>glShaderiv()</code>. This function queries the shader in any number of ways specified by the user, and returns a result of that query into a user-defined variable. For example, the following code gets the compile status of the shader with the ID <code>id</code>, which is either <code>GL_TRUE</code> or <code>GL_FALSE</code>.</p>
+<pre><code class="language-c++"><span class="hljs-keyword">int</span> result;
+glGetShaderiv(id, GL_COMPILE_STATUS, &amp;result);
+
+<span class="hljs-keyword">if</span> (result == GL_FALSE)
+{
+    <span class="hljs-comment">// Get and report the error here</span>
+}
+</code></pre>
+<p>Once we know there's been a compiler error, actually getting the error and printing it is more complicated then usual. First, we need to get the length of the log string, which can be done again through querying the shader with the <code>glGetShaderiv()</code> function. This is very similar to getting the compile status, but instead we are getting the length of the info log so we can display the whole thing later.</p>
+<pre><code class="language-c++"><span class="hljs-keyword">int</span> length;
+glGetShaderiv(id, GL_INFO_LOG_LENGTH, &amp;length);
+</code></pre>
+<p>Next, we need to get the actual message to print to the console. This means first allocating enough memory on the stack to be able to display the message using the length variable we just declared, and then inputting the shader info log data into that memory. Because C++ doesn't want to use a non-constant value to allocate memory on the stack for <code>char</code> arrays, we'll use a C function <code>alloca()</code> to get the result we want. Then we can just use the <code>glGetShaderInfoLog()</code> function to, well, get the shader info log!</p>
+<pre><code class="language-c++"><span class="hljs-keyword">char</span>* message = (<span class="hljs-keyword">char</span>*)alloca(length * <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">char</span>));
+glGetShaderInfoLog(id, length, &amp;length, message);
+</code></pre>
+<p>Now, having gotten the full message, we can simply print it out to the console, with a little bit of precursory information about which shader is causing the error. The final code should look like this:</p>
+<pre><code class="language-c++"><span class="hljs-keyword">int</span> result;
+glGetShaderiv(id, GL_COMPILE_STATUS, &amp;result);
+
+<span class="hljs-keyword">if</span> (result == GL_FALSE)
+{
+    <span class="hljs-keyword">int</span> length;
+    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &amp;length);
+
+    <span class="hljs-keyword">char</span>* message = (<span class="hljs-keyword">char</span>*)alloca(length * <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">char</span>));
+    glGetShaderInfoLog(id, length, &amp;length, message);
+
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">cout</span> &lt;&lt; <span class="hljs-string">"Failed to compile "</span> &lt;&lt; (type == GL_VERTEX_SHADER ? <span class="hljs-string">"vertex"</span> : <span class="hljs-string">"fragment"</span>) &lt;&lt; <span class="hljs-string">" shader!"</span> &lt;&lt; <span class="hljs-built_in">std</span>::<span class="hljs-built_in">endl</span>;
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">cout</span> &lt;&lt; message &lt;&lt; <span class="hljs-built_in">std</span>::<span class="hljs-built_in">endl</span>;
+
+    glDeleteShader(id);
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}
+</code></pre>
+<p>This section of code can replace the <code>// TODO: Error handling</code> from the <strong>Compiling</strong> step. Although there's now an error message printing to the console, later on we'll use assertions to make no errors in shaders a necessary step. For now, simply printing the error will have to do.</p>
+<h2>Writing the Shader Code</h2>
+<p>Shaders in OpenGL are written in GLSL, which stands for GL Shader Language (or something like that). In the next few sections, we'll be going over writing the actual shader code, as well as how we're going to get that shader code from other files into our main file.</p>
+<p>GLSL uses syntax that is very alike to C/C++, so it shouldn't be too hard to grasp. Here we'll go line by line through a typical vertex shader, starting from the top. Then we'll briefly run though a similar process for the fragment shader.</p>
+<h3>Vertex Shader</h3>
+<pre><code class="language-glsl"><span class="hljs-meta">#version 330 core</span>
+</code></pre>
+<p>This line basically says to use GLSL version 330, and core means that all functions must not be deprecated. Versions <code>450</code> or <code>440</code> can be used, but decrease backwards compatibility and come with a lot of new features that we don't necessarily need yet.</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-type">void</span> main()
+{
+}
+</code></pre>
+<p>This looks a lot like a standard C++ main function... because it is. This main function will get called when this vertex shader gets called. Now, we'll delve into what's inside this main function.</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> <span class="hljs-type">vec4</span> position;
+
+<span class="hljs-type">void</span> main()
+{
+}
+</code></pre>
+<p>This new line defines a layout and a new variable to use in our shader. The <code>layout(location = 0)</code> bit references our <code>glVertexAttribPointer()</code> call earlier, where the first argument defines that attribute's "position". Since we defined it as 0 there, we use <code>layout(location = 0)</code> here. The <code>in vec4 position</code> basically says that we are taking in a new value from the location we just defined, it's a 4-component vector, and it's called position.</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> <span class="hljs-type">vec4</span> position;
+
+<span class="hljs-type">void</span> main()
+{
+    <span class="hljs-built_in">gl_Position</span> = position;
+}
+</code></pre>
+<p>This new line is the line that actually sets the position of the vertex to the correct location on screen. This is done by setting the pre-made attribute of the vertex <code>gl_Position</code> to the <code>position</code> variable we just passed in. Even though our position is 2-dimensional, OpenGL can interpret that and convert it to a <code>vec4</code> quantity for us.</p>
+<p>Now we're done writing the code for the vertex shader! Yes, it's that simple. At least, that simple for now. These shaders are really powerful, and you can do some really cool stuff with them.</p>
+<h3>Fragment Shader</h3>
+<p>Moving on to the fragment shader, a lot of the code is the same, if not quite similar. We still have the version declaration and the <code>main()</code> function, but there are a few changes we need to make. First, we need to be <em>outputting</em> a <em>color</em>, not <em>inputting</em> a <em>position</em>. We can do this by changing line 3 of our vertex shader to read:</p>
+<pre><code class="language-glsl"><span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">out</span> <span class="hljs-type">vec4</span> color;
+</code></pre>
+<p>Now, in the main function, we can set the color output variable for each pixel. In this case, just as a test, we'll set every pixel on the shape to be red.</p>
+<pre><code class="language-glsl">color = <span class="hljs-type">vec4</span>(<span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">1.0</span>);
+</code></pre>
+<p>The final fragment shader should have the following code:</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">out</span> <span class="hljs-type">vec4</span> color;
+
+<span class="hljs-type">void</span> main()
+{
+    color = <span class="hljs-type">vec4</span>(<span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">1.0</span>);
+}
+</code></pre>
+<p>In the next section, we'll cover how to get this code from files (such as <code>.shader</code> files) into the actual C++ program, as well as how to parse, compile, and utilize the code within the files.</p>
+<h2>Parsing Shaders from Files</h2>
+<p>Say we create a folder called "res" in our project directory, and we want to store our shader files in a subdirectory called "shaders." We can create these directories and also a file in the shaders directory called "Basic.shader," but natively OpenGL cannot recognize this and use it automatically. Instead, we'll have to manually parse this file (which will contain both vert and frag shader code) so we can use it in our main C++ file.</p>
+<p>In order to make our shader file easier to parse, we'll append <code>#shader &lt;shader type&gt;</code> at the top of each of our shaders, making our final shader file look like this:</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#shader vertex</span>
+<span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> <span class="hljs-type">vec4</span> position;
+
+<span class="hljs-type">void</span> main()
+{
+    <span class="hljs-built_in">gl_Position</span> = position;
+}
+
+<span class="hljs-meta">#shader fragment</span>
+<span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">out</span> <span class="hljs-type">vec4</span> color;
+
+<span class="hljs-type">void</span> main()
+{
+    color = <span class="hljs-type">vec4</span>(<span class="hljs-number">0.1</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.1</span>);
+}
+</code></pre>
+<p>Now that we have our shader in its own contained file, we can port that file into C++ and parse it. To do this, we'll write a function so we can call it neatly later. Before we start writing the function, we'll need to <code>#include &lt;fstream&gt;</code> for getting the files into our main program, and <code>#include &lt;string&gt;</code> and <code>include &lt;sstream&gt;</code> for parsing the actual file. Before we write the function though, let's create a data type to hold the output, which will be two strings (the source code of the vert and frag shader). This can be a simple struct with two variables; it doesn't have to be complex.</p>
+<pre><code class="language-c++"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">ShaderProgramSource</span>
+{</span>
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> VertexSource;
+    <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> FragmentSource;
+}
+</code></pre>
+<p>Now that we have our return type set up, we can start to build our function. First, we'll start a file stream for a file defined by an argument passed into the function as follows:</p>
+<pre><code class="language-c++"><span class="hljs-function"><span class="hljs-keyword">static</span> ShaderProgramSource <span class="hljs-title">ParseShader</span><span class="hljs-params">(<span class="hljs-keyword">const</span> <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>&amp; filepath)</span>
+</span>{
+    <span class="hljs-function"><span class="hljs-built_in">std</span>::ifstream <span class="hljs-title">stream</span><span class="hljs-params">(filepath)</span></span>;
+}
+</code></pre>
+<p>Next, we'll define an <code>enum</code> to hold the mode of our function, which can vary between <code>NONE</code>, <code>VERTEX</code>, and <code>FRAGMENT</code>. This will be used to determine which stream the lines from the file should be put into.</p>
+<pre><code class="language-c++"><span class="hljs-keyword">enum</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ShaderType</span>
+{</span>
+    NONE = <span class="hljs-number">-1</span>, VERTEX = <span class="hljs-number">0</span>, FRAGMENT = <span class="hljs-number">1</span>
+};
+</code></pre>
+<p>Now we'll start actually going line by line through the file and analyzing its contents. To do this, we'll be using that <code>sstream</code> header file we imported earlier. First, let's define a <code>line</code> variable to hold the current line we're analyzing. Next, we'll create a string stream (sstream) which will hold the source code of our two shaders temporarily. Then, we'll set the ShaderType to <code>NONE</code> by default, and we'll be ready to start parsing!</p>
+<pre><code class="language-c++"><span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span> <span class="hljs-built_in">line</span>;
+<span class="hljs-built_in">std</span>::<span class="hljs-built_in">stringstream</span> ss[<span class="hljs-number">2</span>];
+ShaderType type = ShaderType::NONE;
+</code></pre>
+<p>In a while loop, we'll go through each line until there are no more lines, and read their contents. If the line contains the <code>#shader</code> keyword, we need to then look for the type of shader it's defining and switch the mode to that shader so we know which stringstream we need to put the following code into. If it doesn't, we can just put that line into the current stringstream, followed by a newline character. This is done by the following code:</p>
+<pre><code class="language-c++"><span class="hljs-comment">/* Iterate over every line in the file, storing it in the variable "line" */</span>
+<span class="hljs-keyword">while</span> (getline(stream, <span class="hljs-built_in">line</span>))
+{
+    <span class="hljs-comment">/* If the line contains the string "#shader" at some point */</span>
+    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">line</span>.<span class="hljs-built_in">find</span>(<span class="hljs-string">"#shader"</span>) != <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>::npos)
+    {
+        <span class="hljs-comment">/* Try to find either "vertex" or "fragment" and set the mode appropriately */</span>
+        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">line</span>.<span class="hljs-built_in">find</span>(<span class="hljs-string">"vertex"</span>) != <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>::npos)
+            type = ShaderType::VERTEX;
+        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-built_in">line</span>.<span class="hljs-built_in">find</span>(<span class="hljs-string">"fragment"</span>) != <span class="hljs-built_in">std</span>::<span class="hljs-built_in">string</span>::npos)
+            type = ShaderType::FRAGMENT;
+    }
+    <span class="hljs-comment">/* Otherwise, just add the current line to the string stream corresponding to the current mode */</span>
+    <span class="hljs-keyword">else</span>
+    {
+        ss[(<span class="hljs-keyword">int</span>)type] &lt;&lt; <span class="hljs-built_in">line</span> &lt;&lt; <span class="hljs-string">'\n'</span>;
+    }
+}
+</code></pre>
+<p>Finally, after parsing the file and putting the result into the string stream, we can return a <code>ShaderProgramSource</code> object, ending our function.</p>
+<pre><code class="language-c++"><span class="hljs-keyword">return</span> { ss[<span class="hljs-number">0</span>].str(), ss[<span class="hljs-number">1</span>].str() };
+</code></pre>
+<h3>Using the Parsed Code in OpenGL</h3>
+<p>When we wrote the shaders, we didn't put them anywhere in any file, so let's change that! Make a new file in a folder called <code>res/shaders/</code>, and call it whatever you want. For now, we'll use <code>Basic.shader</code>. Now, copy the shader code from before and put it into the <code>res/shaders/Basic.shader</code> file. Once you add the <code>#shader</code> headers, the final file should look like this:</p>
+<pre><code class="language-glsl"><span class="hljs-meta">#shader vertex</span>
+<span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> <span class="hljs-type">vec4</span> position;
+
+<span class="hljs-type">void</span> main()
+{
+    <span class="hljs-built_in">gl_Position</span> = position;
+}
+
+<span class="hljs-meta">#shader fragment</span>
+<span class="hljs-meta">#version 330 core</span>
+
+<span class="hljs-keyword">layout</span>(<span class="hljs-keyword">location</span> = <span class="hljs-number">0</span>) <span class="hljs-keyword">out</span> <span class="hljs-type">vec4</span> color;
+
+<span class="hljs-type">void</span> main()
+{
+    color = <span class="hljs-type">vec4</span>(<span class="hljs-number">1.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">0.0</span>, <span class="hljs-number">1.0</span>);
+}
+</code></pre>
+<p>We can now use the ParseShader function to get the source code from this file in our <code>main()</code> function. If we take this code and store it in a <code>ShaderProgramSource</code> object, we can pass that into our <code>CreateShader()</code> function and actually create the shader:</p>
+<pre><code class="language-c++"><span class="hljs-comment">/* Get the source from a file (path is relative to the executable) */</span>
+ShaderProgramSource source = ParseShader(<span class="hljs-string">"res/shaders/Basic.shader"</span>);
+<span class="hljs-comment">/* Assign the shader source to a new shader with ID "shader" */</span>
+<span class="hljs-keyword">unsigned</span> <span class="hljs-keyword">int</span> shader = CreateShader(source.VertexSource, source.FragmentSource);
+
+<span class="hljs-comment">/* Use the program when drawing */</span>
+glUseProgram(shader);
+</code></pre>
+<p>Now, after we finish looping in the window, we need to delete the shader program to free up memory. This can be done as shown below:</p>
+<pre><code class="language-c++">glDeleteProgram(shader);
+</code></pre>
+<p>And we're done! When you run the application, whatever shape you're drawing should be completely red. Now you can write shaders in different files and use them in your main application!</p>
+<h2>Credits</h2>
+<h3>Where I Learned</h3>
+<ul>
+<li><a href="https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw">The Cherno</a></li>
+<li><a href="https://learnopengl.com/Getting-started/Shaders">Learn OpenGL</a></li>
+</ul>
+<h3>Cool Stuff</h3>
+<ul>
+<li><a href="https://www.geeks3d.com/shader-library/">Geeks3D Shader Library</a></li>
+<li><a href="https://www.shadertoy.com/">ShaderToy</a></li>
+<li><a href="http://glslsandbox.com/">GLSL Sandbox</a></li>
+<li><a href="https://github.com/radixzz/awesome-glsl">This list by 'radixzz'</a></li>
+</ul>
+</article>
+           </div>
+         </div>
+       </div>
+    </div>
+    <div class="item row2"></div>
+    <div class="item row3"></div>
+    <div class="item row3"></div>
+    <div class="item row3"></div>
+  </div>
+  <div id="con-error" style="display: block;">Live preview is unavailable</div>
+
+
+</body></html>
