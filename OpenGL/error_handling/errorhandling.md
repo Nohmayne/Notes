@@ -10,6 +10,7 @@
 4.  Assertions
     1.  Basics
     2.  Making a complete wrapper
+    3.  Getting better output
 5.  Conclusion
     1.  Resources
 
@@ -110,12 +111,38 @@ Now, we can wrap any OpenGL function in this macro, and it will automatically se
 GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 ```
 
+We still don't have the error message specifying which file or line the error is on, which is not the best. Let's fix that now.
+
+### Getting better output
+
+To print the actual function, file, and line where the error occurred, let's add some arguments to our `GLLogCall()` function and modify it to print their values.
+
+```c++
+static bool GLLogCall(const char* function, const char* file, int line)
+
+{
+    while (GLenum err = glGetError())
+    {
+        fprintf(stderr, "[OpenGL-->Err] (%s): %s %s: %s\n", error, function, file, line);
+        return false;
+    }
+    return true;
+}
+```
+
+Now we need to fill all that information in. The function name can be retrieved by doing `#x` in our assertion, which returns the string value of `x`. The file can be found by using `__FILE__`, which is *not* intrinsic and thus should work universally. Finally, the line can be found by using `__LINE__`, the same way we use `__FILE__`. Our final assert statement in our `GLCall()` macro should look like this:
+
+```c++
+ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+```
+
 ## Conclusion
 
-Now we have a function we can call to get errors, but we still have to call it on every single instance of an OpenGL function in our program. This is still not the best, so we will be migrating to a more modern method in the future.
+Now we have a function we can call to get extensive errors, but we still have to wrap every single OpenGL function in our program with it. This is still not the best, so we will be migrating to a more modern method in the future.
 
 ### Resources
 
 -   [docs.gl](http://docs.gl/)
 -   [StackOverflow](https://stackoverflow.com/questions/4326414/set-breakpoint-in-c-or-c-code-programmatically-for-gdb-on-linux)
 -   [The Cherno](https://www.youtube.com/watch?v=FBbPWSOQ0-w&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=11&t=0s)
+    -   Support his [patreon](https://patreon.com/thecherno)
