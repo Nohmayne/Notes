@@ -2,6 +2,10 @@
 
 These are all of my notes for programming, software development, GNU/Linux, markup / markdown, and more.
 
+```c++
+std::cout << "Hello, world!" << std::endl;
+```
+
 ## Categories
 
 1.  $\LaTeX$
