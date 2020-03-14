@@ -10,3 +10,7 @@ Shows how to use index buffers in OpenGL to draw a rectangle instead of just one
 Shows how to write shaders in *GLSL*, and how to parse, compile, and use them in *C++*. Demo is making the triangle from **Basics** red.
 ## Uniforms
 Shows how to get data from *C++* into *GLSL* (application to shader) and make the rectangle from **Index Buffers** shift colors over time.
+## Vertex Arrays
+Shows how to make binding the necessary OpenGL objects before drawing easier using vertex arrays, which are necessary in the OpenGL core profile.
+## Abstracting
+Shows how to abstract the already made concepts in our main file into different classes and header files. See the README in that folder for more details.
