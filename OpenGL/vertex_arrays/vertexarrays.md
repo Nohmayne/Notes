@@ -101,4 +101,4 @@ VAOs allow us to very quickly and easily bind an object to be drawn to the scree
 ### Resources
 + [The Cherno](https://www.youtube.com/watch?v=Bcs56Mm-FJY&list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2&index=12)
 + The [OpenGL wiki](https://www.khronos.org/opengl/wiki/Vertex_Specification)
-+ [docs.gl](docs.gl)
++ [docs.gl](http://docs.gl)
