@@ -58,6 +58,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
     unsigned int id = glCreateShader(type); // Create a shader with an ID of "id"
     const char* src = source.c_str(); // Convert the source code into a const char*
     glShaderSource(id, 1, &src, nullptr); // Assign the source code to the shader "id"
+    glCompileShader(id);
 
     // TODO: Error handling
 
@@ -74,8 +75,8 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 {
     unsigned int program = glCreateProgram(); // Create the program to store both shaders
 
-    unsigned int vs = CreateShader(GL_VERTEX_SHADER, vertexShader); // Create the vertex shader
-    unsigned int fs = CreateShader(GL_FRAGMENT_SHADER, fragmentShader); // Create the fragment shader
+    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader); // Create the vertex shader
+    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader); // Create the fragment shader
 
     /* Attach the shaders to the program */
     glAttachShader(program, vs);
