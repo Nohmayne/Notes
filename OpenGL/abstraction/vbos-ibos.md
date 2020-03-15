@@ -13,8 +13,8 @@ First, we'll make a "VertexBuffer" `.cpp` and `.hpp` file. Then, after including
 + An `unsigned int m_RendererID`;
 + A constructor with a `const void* data`, and an `unsigned int size`.
 + A destructor
-+ A `bind()` function
-+ An `unbind()` function
++ A `void bind()` function
++ An `void unbind()` function
 
 We know for every OpenGL object, there has to be some kind of ID that identifies that specific buffer or object. Other APIs also work on a similar system, so giving our new object an ID keeps things consistent. If we're using OpenGL as our renderer, this will be the ID that it uses. Later, we may have an engine-side ID to keep track of things.
 
