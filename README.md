@@ -40,8 +40,16 @@ Documents to test out markdown formatting and experiment with the language.
 
 Limited (if any) notes on the OpenGL API for graphics programming in C++. Again, see the OpenGL section for more info.
 
+### Game Engine
+
+Notes from the Game Engine series by [The Cherno](https://www.youtube.com/watch?v=JxIZbV_XjAs&list=PLlrATfBNZ98dC-V-N3m0Go4deliWHPFwT)
+
 ## OpenGL
 
 Notes on the OpenGL API for graphics programming in C++. These notes will cover a broad series of subjects, and are mostly (if not entirely) derived from the [OpenGL playlist](https://www.youtube.com/playlist?list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2) by [The Cherno](https://www.youtube.com/channel/UCQ-W1KE9EYfdxhL6S4twUNw) on YouTube. I will be making these notes at varying levels of depth, as these notes are also my way of learning and refining my markdown note taking style and methodology.
 
 For more information, see [this page](https://github.com/Nohmayne/Notes/tree/master/OpenGL)
+
+## Game Engine
+
+See the README.md in there for more notes
